@@ -1,2 +1,3 @@
 # Fear-Conditioning-Graphs
-Fear Conditioning Graphs
+
+Daniel Jin Fear Conditioning Graphs
