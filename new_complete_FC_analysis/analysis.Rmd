@@ -159,9 +159,11 @@ mice_count <- all_day1 %>%
     Sex == 'female ' ~ 'Female',
     Sex == 'male ' ~ 'Male'
   )) %>%
-  select(Genotype, Treatment, Sex, Age) %>%
+  select(Genotype, Treatment, Sex, Age, Age_Handling) %>%
   group_by(Genotype, Treatment, Sex, Age) %>%
-  summarise(Count = n())
+  summarise(Count = n(),
+            sd = sd(Age_Handling),
+            len = mean(Age_Handling))
 
 missing_mice <- setdiff(add1$Animal_ID, animal_info$Animal_ID)
   
@@ -191,6 +193,8 @@ day0_relevant_data <- all_day0 %>%
   )) %>%
   select(Animal_ID, Time, Age, Sex, Genotype, Treatment, Pct.Total.Time.Freezing)
 
+# day 0 comparing all ages and genotypes by treatment
+
 day0_all_ages_genotype_treatment <- day0_relevant_data %>%
   select(Genotype, Treatment, Time, Pct.Total.Time.Freezing) %>%
   group_by(Genotype, Treatment, Time) %>% 
@@ -207,6 +211,8 @@ ggplot(data = day0_all_ages_genotype_treatment, aes(x = Time, y = len, color = G
     y = 'Mean Percent Time Freezing', 
     legend = 'Genotype') +
   scale_x_continuous(breaks = c(1, 2, 3))
+
+# day 0 comparing 12 month old all genotypes by treatment
 
 day0_12_months_genotype_treatment <- day0_relevant_data %>%
   filter(Age == '12 months') %>% 
@@ -226,6 +232,8 @@ ggplot(data = day0_12_months_genotype_treatment, aes(x = Time, y = len, color = 
     legend = 'Genotype') +
   scale_x_continuous(breaks = c(1, 2, 3))
 
+# day 0 comparing 18 month old all genotypes by treatment
+
 day0_18_months_genotype_treatment <- day0_relevant_data %>%
   filter(Age == '18 months') %>% 
   select(Genotype, Treatment, Time, Pct.Total.Time.Freezing) %>%
@@ -244,25 +252,117 @@ ggplot(data = day0_18_months_genotype_treatment, aes(x = Time, y = len, color = 
     legend = 'Genotype') +
   scale_x_continuous(breaks = c(1, 2, 3))
 
-day0_12_months_genotype_treatment_sex <- day0_relevant_data %>%
+# day 0 comparing 12 month old HNs and nonHNs by treatment
+
+day0_12_months_HN_genotype_treatment <- day0_relevant_data %>%
   filter(Age == '12 months') %>% 
-  select(Genotype, Treatment, Sex, Time, Pct.Total.Time.Freezing) %>%
-  group_by(Genotype, Treatment, Sex, Time) %>% 
+  filter(Genotype == "APOE22HN" |
+         Genotype == "APOE33HN" |
+         Genotype == "APOE44HN") %>%
+  select(Genotype, Treatment, Time, Pct.Total.Time.Freezing) %>%
+  group_by(Genotype, Treatment, Time) %>% 
   summarise(n=n(),
             se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
             len = mean(Pct.Total.Time.Freezing))
-
-ggplot(data = day0_12_months_genotype_treatment_sex, aes(x = Time, y = len, color = Genotype)) +
+  
+ggplot(data = day0_12_months_HN_genotype_treatment, aes(x = Time, y = len, color = Genotype)) +
   geom_line() +
-  facet_grid(Treatment~Sex)  + 
+  facet_grid(.~Treatment) + 
   geom_errorbar(aes(ymin = len - se, ymax = len + se), width = 0.2, size = 0.5) +
   theme_bw() + 
-  labs(title = 'Day 0 12 Months Old Learning Curves by Genotype, Sex, and Treatment', x = 'Sound Component', 
+  labs(title = 'Day 0 12 Months Old Learning Curves by HN Genotype and Treatment', x = 'Sound Component', 
     y = 'Mean Percent Time Freezing', 
     legend = 'Genotype') +
   scale_x_continuous(breaks = c(1, 2, 3))
 
-day0_12_months_HNs <- day0_relevant_data %>%
+day0_12_months_nonHN_genotype_treatment <- day0_relevant_data %>%
+  filter(Age == '12 months') %>% 
+  filter(Genotype == "APOE22" |
+         Genotype == "APOE33" |
+         Genotype == "APOE44") %>%
+  select(Genotype, Treatment, Time, Pct.Total.Time.Freezing) %>%
+  group_by(Genotype, Treatment, Time) %>% 
+  summarise(n=n(),
+            se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
+            len = mean(Pct.Total.Time.Freezing))
+  
+ggplot(data = day0_12_months_nonHN_genotype_treatment, aes(x = Time, y = len, color = Genotype)) +
+  geom_line() +
+  facet_grid(.~Treatment) + 
+  geom_errorbar(aes(ymin = len - se, ymax = len + se), width = 0.2, size = 0.5) +
+  theme_bw() + 
+  labs(title = 'Day 0 12 Months Old Learning Curves by nonHN Genotype and Treatment', x = 'Sound Component', 
+    y = 'Mean Percent Time Freezing', 
+    legend = 'Genotype') +
+  scale_x_continuous(breaks = c(1, 2, 3))
+
+# day 0 comparing 18 month old HNs and nonHNs by treatment
+
+day0_18_months_HN_genotype_treatment <- day0_relevant_data %>%
+  filter(Age == '18 months') %>% 
+  filter(Genotype == "APOE22HN" |
+         Genotype == "APOE33HN" |
+         Genotype == "APOE44HN") %>%
+  select(Genotype, Treatment, Time, Pct.Total.Time.Freezing) %>%
+  group_by(Genotype, Treatment, Time) %>% 
+  summarise(n=n(),
+            se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
+            len = mean(Pct.Total.Time.Freezing))
+  
+ggplot(data = day0_18_months_HN_genotype_treatment, aes(x = Time, y = len, color = Genotype)) +
+  geom_line() +
+  facet_grid(.~Treatment) + 
+  geom_errorbar(aes(ymin = len - se, ymax = len + se), width = 0.2, size = 0.5) +
+  theme_bw() + 
+  labs(title = 'Day 0 18 Months Old Learning Curves by HN Genotype and Treatment', x = 'Sound Component', 
+    y = 'Mean Percent Time Freezing', 
+    legend = 'Genotype') +
+  scale_x_continuous(breaks = c(1, 2, 3))
+
+day0_18_months_nonHN_genotype_treatment <- day0_relevant_data %>%
+  filter(Age == '18 months') %>% 
+  filter(Genotype == "APOE22" |
+         Genotype == "APOE33" |
+         Genotype == "APOE44") %>%
+  select(Genotype, Treatment, Time, Pct.Total.Time.Freezing) %>%
+  group_by(Genotype, Treatment, Time) %>% 
+  summarise(n=n(),
+            se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
+            len = mean(Pct.Total.Time.Freezing))
+  
+ggplot(data = day0_18_months_nonHN_genotype_treatment, aes(x = Time, y = len, color = Genotype)) +
+  geom_line() +
+  facet_grid(.~Treatment) + 
+  geom_errorbar(aes(ymin = len - se, ymax = len + se), width = 0.2, size = 0.5) +
+  theme_bw() + 
+  labs(title = 'Day 0 18 Months Old Learning Curves by nonHN Genotype and Treatment', x = 'Sound Component', 
+    y = 'Mean Percent Time Freezing', 
+    legend = 'Genotype') +
+  scale_x_continuous(breaks = c(1, 2, 3))
+
+# day 0 comparing 12 month old all genotypes by treatment and sex
+
+# day0_12_months_genotype_treatment_sex <- day0_relevant_data %>%
+#   filter(Age == '12 months') %>% 
+#   select(Genotype, Treatment, Sex, Time, Pct.Total.Time.Freezing) %>%
+#   group_by(Genotype, Treatment, Sex, Time) %>% 
+#   summarise(n=n(),
+#             se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
+#             len = mean(Pct.Total.Time.Freezing))
+# 
+# ggplot(data = day0_12_months_genotype_treatment_sex, aes(x = Time, y = len, color = Genotype)) +
+#   geom_line() +
+#   facet_grid(Treatment~Sex)  + 
+#   geom_errorbar(aes(ymin = len - se, ymax = len + se), width = 0.2, size = 0.5) +
+#   theme_bw() + 
+#   labs(title = 'Day 0 12 Months Old Learning Curves by Genotype, Sex, and Treatment', x = 'Sound Component', 
+#     y = 'Mean Percent Time Freezing', 
+#     legend = 'Genotype') +
+#   scale_x_continuous(breaks = c(1, 2, 3))
+
+# day 0 comparing 12 month old HN and nonHNs by treatment and sex
+
+day0_12_months_HNs_treatment_sex <- day0_relevant_data %>%
   filter(Age == '12 months') %>% 
   filter(Genotype == "APOE22HN" |
          Genotype == "APOE33HN" |
@@ -273,17 +373,17 @@ day0_12_months_HNs <- day0_relevant_data %>%
             se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
             len = mean(Pct.Total.Time.Freezing))
 
-ggplot(data = day0_12_months_HNs, aes(x = Time, y = len, color = Genotype)) +
+ggplot(data = day0_12_months_HNs_treatment_sex, aes(x = Time, y = len, color = Genotype)) +
   geom_line() +
   facet_grid(Treatment~Sex)  + 
   geom_errorbar(aes(ymin = len - se, ymax = len + se), width = 0.2, size = 0.5) +
   theme_bw() + 
-  labs(title = 'Day 0 12 Months Old HNs Learning Curves by Genotype, Sex, and Treatment', x = 'Sound Component', 
+  labs(title = 'Day 0 12 Months Old HNs by Genotype, Sex, and Treatment', x = 'Sound Component', 
     y = 'Mean Percent Time Freezing', 
     legend = 'Genotype') +
   scale_x_continuous(breaks = c(1, 2, 3))
 
-day0_12_months_nonHNs <- day0_relevant_data %>%
+day0_12_months_nonHNs_treatment_sex <- day0_relevant_data %>%
   filter(Age == '12 months') %>% 
   filter(Genotype == "APOE22" |
          Genotype == "APOE33" |
@@ -294,15 +394,61 @@ day0_12_months_nonHNs <- day0_relevant_data %>%
             se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
             len = mean(Pct.Total.Time.Freezing))
 
-ggplot(data = day0_12_months_nonHNs, aes(x = Time, y = len, color = Genotype)) +
+ggplot(data = day0_12_months_nonHNs_treatment_sex, aes(x = Time, y = len, color = Genotype)) +
   geom_line() +
   facet_grid(Treatment~Sex)  + 
   geom_errorbar(aes(ymin = len - se, ymax = len + se), width = 0.2, size = 0.5) +
   theme_bw() + 
-  labs(title = 'Day 0 12 Months Old nonHNs Learning Curves by Genotype, Sex, and Treatment', x = 'Sound Component', 
+  labs(title = 'Day 0 12 Months Old nonHNs by Genotype, Sex, and Treatment', x = 'Sound Component', 
     y = 'Mean Percent Time Freezing', 
     legend = 'Genotype') +
   scale_x_continuous(breaks = c(1, 2, 3))
+
+# day 0 comparing 18 month old HN and nonHNs by treatment and sex
+
+day0_18_months_HNs_treatment_sex <- day0_relevant_data %>%
+  filter(Age == '18 months') %>% 
+  filter(Genotype == "APOE22HN" |
+         Genotype == "APOE33HN" |
+         Genotype == "APOE44HN") %>% 
+  select(Genotype, Treatment, Sex, Time, Pct.Total.Time.Freezing) %>%
+  group_by(Genotype, Treatment, Sex, Time) %>% 
+  summarise(n=n(),
+            se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
+            len = mean(Pct.Total.Time.Freezing))
+
+ggplot(data = day0_18_months_HNs_treatment_sex, aes(x = Time, y = len, color = Genotype)) +
+  geom_line() +
+  facet_grid(Treatment~Sex)  + 
+  geom_errorbar(aes(ymin = len - se, ymax = len + se), width = 0.2, size = 0.5) +
+  theme_bw() + 
+  labs(title = 'Day 0 18 Months Old HNs by Genotype, Sex, and Treatment', x = 'Sound Component', 
+    y = 'Mean Percent Time Freezing', 
+    legend = 'Genotype') +
+  scale_x_continuous(breaks = c(1, 2, 3))
+
+day0_18_months_nonHNs_treatment_sex <- day0_relevant_data %>%
+  filter(Age == '18 months') %>% 
+  filter(Genotype == "APOE22" |
+         Genotype == "APOE33" |
+         Genotype == "APOE44") %>% 
+  select(Genotype, Treatment, Sex, Time, Pct.Total.Time.Freezing) %>%
+  group_by(Genotype, Treatment, Sex, Time) %>% 
+  summarise(n=n(),
+            se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
+            len = mean(Pct.Total.Time.Freezing))
+
+ggplot(data = day0_18_months_nonHNs_treatment_sex, aes(x = Time, y = len, color = Genotype)) +
+  geom_line() +
+  facet_grid(Treatment~Sex)  + 
+  geom_errorbar(aes(ymin = len - se, ymax = len + se), width = 0.2, size = 0.5) +
+  theme_bw() + 
+  labs(title = 'Day 0 18 Months Old nonHNs by Genotype, Sex, and Treatment', x = 'Sound Component', 
+    y = 'Mean Percent Time Freezing', 
+    legend = 'Genotype') +
+  scale_x_continuous(breaks = c(1, 2, 3))
+
+# day 0 comparing HN and nonHNs by age
 
 day0_age_treatment_HNs <- day0_relevant_data %>%
   select(Age, Treatment, Genotype, Time, Pct.Total.Time.Freezing) %>%
@@ -344,6 +490,8 @@ ggplot(data = day0_age_treatment_nonHNs, aes(x = Time, y = len, color = Age)) +
     legend = 'Genotype') +
   scale_x_continuous(breaks = c(1, 2, 3))  
 
+
+
 ```
 
 ```{r day-1-analysis}
@@ -361,113 +509,235 @@ day1_relevant_data <- all_day1 %>%
   )) %>%
   select(Animal_ID, Age, Sex, Genotype, Treatment, Pct.Total.Time.Freezing)
 
-day1_age_HN_genotype_treatment_pctfreezing <- day1_relevant_data %>%
-  select(Age, Genotype, Treatment, Pct.Total.Time.Freezing) %>%
+# day 1 comparing HN and nonHNs by age
+
+day1_HN_genotype <- day1_relevant_data %>%
   filter(Genotype == "APOE22HN" |
          Genotype == "APOE33HN" |
-         Genotype == "APOE44HN") %>%
-  group_by(Age, Genotype, Treatment) %>%
-  summarise(n=n(),
-            se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
-            len = mean(Pct.Total.Time.Freezing))
-
-ggplot(data = day1_age_HN_genotype_treatment_pctfreezing, aes(x = Treatment, y = len, fill = Treatment)) +
-  geom_bar(stat = 'identity') +
-  facet_grid(Genotype~Age) + 
-  geom_errorbar(aes(ymin=len-se, ymax=len+se), width = 0.2, size = 0.5) +
+         Genotype == "APOE44HN")
+  
+ggplot(data = day1_HN_genotype, aes(factor(Treatment), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
   theme_bw() +
-  labs(title = 'Day 1 Contextual Test by Treatment, Age, and HN Genotype', y = 'Mean Percent Time Freezing', x = 'Treatment')
+  facet_grid(Genotype~Age) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Treatment), alpha = 0.25) +
+  labs(title='Day 1 Contextual Test by Treatment, Age, and HN Genotype', y = 'Percent Freezing Time', x='Genotype') 
 
-day1_age_nonHN_genotype_treatment_pctfreezing <- day1_relevant_data %>%
-  select(Age, Genotype, Treatment, Pct.Total.Time.Freezing) %>%
+day1_nonHN_genotype <- day1_relevant_data %>%
   filter(Genotype == "APOE22" |
          Genotype == "APOE33" |
-         Genotype == "APOE44") %>%
-  group_by(Age, Genotype, Treatment) %>%
-  summarise(n=n(),
-            se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
-            len = mean(Pct.Total.Time.Freezing))
-
-ggplot(data = day1_age_nonHN_genotype_treatment_pctfreezing, aes(x = Treatment, y = len, fill = Treatment)) +
-  geom_bar(stat = 'identity') +
+         Genotype == "APOE44")
+  
+ggplot(data = day1_nonHN_genotype, aes(factor(Treatment), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
   facet_grid(Genotype~Age) + 
-  geom_errorbar(aes(ymin=len-se, ymax=len+se), width = 0.2, size = 0.5) +
-  theme_bw() +
-  labs(title = 'Day 1 Contextual Test by Treatment, Age, and HN Genotype', y = 'Mean Percent Time Freezing', x = 'Treatment')
+  geom_jitter(height = 0, width = 0.3, aes(color = Treatment), alpha = 0.25) +
+  labs(title='Day 1 Contextual Test by Treatment, Age, and nonHN Genotype', y = 'Percent Freezing Time', x='Genotype')
 
-day1_genotype_treatment_pctfreezing <- day1_relevant_data %>%
-  select(Genotype, Treatment, Pct.Total.Time.Freezing) %>%
-  group_by(Genotype, Treatment) %>%
-  summarise(n=n(),
-            se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
-            len = mean(Pct.Total.Time.Freezing))
+# day1_age_HN_genotype_treatment_pctfreezing <- day1_relevant_data %>%
+#   select(Age, Genotype, Treatment, Pct.Total.Time.Freezing) %>%
+#   filter(Genotype == "APOE22HN" |
+#          Genotype == "APOE33HN" |
+#          Genotype == "APOE44HN") %>%
+#   group_by(Age, Genotype, Treatment) %>%
+#   summarise(n=n(),
+#             se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
+#             len = mean(Pct.Total.Time.Freezing))
+# 
+# ggplot(data = day1_age_HN_genotype_treatment_pctfreezing, aes(x = Treatment, y = len, fill = Treatment)) +
+#   geom_bar(stat = 'identity') +
+#   facet_grid(Genotype~Age) + 
+#   geom_errorbar(aes(ymin=len-se, ymax=len+se), width = 0.2, size = 0.5) +
+#   theme_bw() +
+#   labs(title = 'Day 1 Contextual Test by Treatment, Age, and HN Genotype', y = 'Mean Percent Time Freezing', x = 'Treatment')
+# 
+# day1_age_nonHN_genotype_treatment_pctfreezing <- day1_relevant_data %>%
+#   select(Age, Genotype, Treatment, Pct.Total.Time.Freezing) %>%
+#   filter(Genotype == "APOE22" |
+#          Genotype == "APOE33" |
+#          Genotype == "APOE44") %>%
+#   group_by(Age, Genotype, Treatment) %>%
+#   summarise(n=n(),
+#             se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
+#             len = mean(Pct.Total.Time.Freezing))
+# 
+# ggplot(data = day1_age_nonHN_genotype_treatment_pctfreezing, aes(x = Treatment, y = len, fill = Treatment)) +
+#   geom_bar(stat = 'identity') +
+#   facet_grid(Genotype~Age) + 
+#   geom_errorbar(aes(ymin=len-se, ymax=len+se), width = 0.2, size = 0.5) +
+#   theme_bw() +
+#   labs(title = 'Day 1 Contextual Test by Treatment, Age, and nonHN Genotype', y = 'Mean Percent Time Freezing', x = 'Treatment')
 
-ggplot(data=day1_genotype_treatment_pctfreezing, aes(x=Genotype, y=len, fill=Genotype)) +
-  geom_bar(stat='identity') +
-  facet_grid(.~Treatment) + 
-  geom_errorbar(aes(ymin=len-se, ymax=len+se), width=0.2, size=0.5) +
-  theme_bw() +
-  labs(title='Day 1 Contextual Test All Ages by Treatment and Genotype', y='Mean Percent Time Freezing', x='Genotype') + 
-  theme(axis.text.x = element_text(angle = 90))
+# day 1 comparing all ages HN and nonHNs by treatment
 
-day1_12_months_genotype_treatment_pctfreezing <- day1_relevant_data %>%
-  filter(Age == '12 months') %>%
-  select(Genotype, Treatment, Pct.Total.Time.Freezing) %>%
-  group_by(Genotype, Treatment) %>%
-  summarise(n=n(),
-            se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
-            len = mean(Pct.Total.Time.Freezing))
-
-ggplot(data=day1_12_months_genotype_treatment_pctfreezing, aes(x=Genotype, y=len, fill=Genotype)) +
-  geom_bar(stat='identity') +
-  facet_grid(.~Treatment) + 
-  geom_errorbar(aes(ymin=len-se, ymax=len+se), width=0.2, size=0.5) +
-  theme_bw() +
-  labs(title='Day 1 Contextual Test 12 Months by Treatment and Genotype', y='Mean Percent Time Freezing', x='Genotype') + 
-  theme(axis.text.x = element_text(angle = 90))
-
-day1_18_months_genotype_treatment_pctfreezing <- day1_relevant_data %>%
-  filter(Age == '18 months') %>%
-  select(Genotype, Treatment, Pct.Total.Time.Freezing) %>%
-  group_by(Genotype, Treatment) %>%
-  summarise(n=n(),
-            se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
-            len = mean(Pct.Total.Time.Freezing))
-
-ggplot(data=day1_18_months_genotype_treatment_pctfreezing, aes(x=Genotype, y=len, fill=Genotype)) +
-  geom_bar(stat='identity') +
-  facet_grid(.~Treatment) + 
-  geom_errorbar(aes(ymin=len-se, ymax=len+se), width=0.2, size=0.5) +
-  theme_bw() +
-  labs(title='Day 1 Contextual Test 18 Months by Treatment and Genotype', y='Mean Percent Time Freezing', x='Genotype') + 
-  theme(axis.text.x = element_text(angle = 90))
-
-ggplot(data = day1_relevant_data, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+ggplot(data = day1_HN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
   geom_violin() +
   geom_boxplot(width = 0.1) +
   theme_bw() +
   facet_grid(.~Treatment) + 
   geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
-  labs(title='Day 1 Contextual Test by Genotype and Treatment', y = 'Percent Freezing Time', x='Genotype') + 
-  theme(axis.text.x = element_text(angle = 90))
+  labs(title='Day 1 Contextual Test All Ages by Treatment and HN Genotype', y = 'Percent Freezing Time', x='Genotype')
 
-ggplot(data = day1_relevant_data, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+ggplot(data = day1_nonHN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(.~Treatment) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 1 Contextual Test All Ages by Treatment and nonHN Genotype', y = 'Percent Freezing Time', x='Genotype')
+
+# day1_genotype_treatment_pctfreezing <- day1_relevant_data %>%
+#   select(Genotype, Treatment, Pct.Total.Time.Freezing) %>%
+#   group_by(Genotype, Treatment) %>%
+#   summarise(n=n(),
+#             se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
+#             len = mean(Pct.Total.Time.Freezing))
+# 
+# ggplot(data=day1_genotype_treatment_pctfreezing, aes(x=Genotype, y=len, fill=Genotype)) +
+#   geom_bar(stat='identity') +
+#   facet_grid(.~Treatment) + 
+#   geom_errorbar(aes(ymin=len-se, ymax=len+se), width=0.2, size=0.5) +
+#   theme_bw() +
+#   labs(title='Day 1 Contextual Test All Ages by Treatment and Genotype', y='Mean Percent Time Freezing', x='Genotype') + 
+#   theme(axis.text.x = element_text(angle = 90))
+
+# day 1 comparing 12 month old HN and nonHNs by treatment
+
+day1_12_months_HN_genotype <- day1_HN_genotype %>%
+  filter(Age == '12 months')
+
+ggplot(data = day1_12_months_HN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(.~Treatment) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 1 Contextual Test 12 Months by Treatment and HN Genotype', y = 'Percent Freezing Time', x='Genotype')
+
+day1_12_months_nonHN_genotype <- day1_nonHN_genotype %>%
+  filter(Age == '12 months')
+
+ggplot(data = day1_12_months_nonHN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(.~Treatment) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 1 Contextual Test 12 Months by Treatment and nonHN Genotype', y = 'Percent Freezing Time', x='Genotype')
+
+# day1_12_months_genotype_treatment_pctfreezing <- day1_relevant_data %>%
+#   filter(Age == '12 months') %>%
+#   select(Genotype, Treatment, Pct.Total.Time.Freezing) %>%
+#   group_by(Genotype, Treatment) %>%
+#   summarise(n=n(),
+#             se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
+#             len = mean(Pct.Total.Time.Freezing))
+# 
+# ggplot(data=day1_12_months_genotype_treatment_pctfreezing, aes(x=Genotype, y=len, fill=Genotype)) +
+#   geom_bar(stat='identity') +
+#   facet_grid(.~Treatment) + 
+#   geom_errorbar(aes(ymin=len-se, ymax=len+se), width=0.2, size=0.5) +
+#   theme_bw() +
+#   labs(title='Day 1 Contextual Test 12 Months by Treatment and Genotype', y='Mean Percent Time Freezing', x='Genotype') + 
+#   theme(axis.text.x = element_text(angle = 90))
+
+# day 1 comparing 18 month old HN and nonHNs by treatment
+
+day1_18_months_HN_genotype <- day1_HN_genotype %>%
+  filter(Age == '18 months')
+
+ggplot(data = day1_18_months_HN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(.~Treatment) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 1 Contextual Test 18 Months by Treatment and HN Genotype', y = 'Percent Freezing Time', x='Genotype')
+
+day1_18_months_nonHN_genotype <- day1_nonHN_genotype %>%
+  filter(Age == '18 months')
+
+ggplot(data = day1_18_months_nonHN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(.~Treatment) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 1 Contextual Test 18 Months by Treatment and nonHN Genotype', y = 'Percent Freezing Time', x='Genotype')
+
+# day1_18_months_genotype_treatment_pctfreezing <- day1_relevant_data %>%
+#   filter(Age == '18 months') %>%
+#   select(Genotype, Treatment, Pct.Total.Time.Freezing) %>%
+#   group_by(Genotype, Treatment) %>%
+#   summarise(n=n(),
+#             se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
+#             len = mean(Pct.Total.Time.Freezing))
+# 
+# ggplot(data=day1_18_months_genotype_treatment_pctfreezing, aes(x=Genotype, y=len, fill=Genotype)) +
+#   geom_bar(stat='identity') +
+#   facet_grid(.~Treatment) + 
+#   geom_errorbar(aes(ymin=len-se, ymax=len+se), width=0.2, size=0.5) +
+#   theme_bw() +
+#   labs(title='Day 1 Contextual Test 18 Months by Treatment and Genotype', y='Mean Percent Time Freezing', x='Genotype') + 
+#   theme(axis.text.x = element_text(angle = 90))
+
+# day 1 comparing HN and nonHNs by sex
+
+ggplot(data = day1_HN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
   geom_violin() +
   geom_boxplot(width = 0.1) +
   theme_bw() +
   facet_grid(.~Sex) + 
   geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
-  labs(title='Day 1 Contextual Test by Sex and Treatment', y = 'Percent Freezing Time', x='Genotype') + 
-  theme(axis.text.x = element_text(angle = 90))
+  labs(title='Day 1 Contextual Test All Ages by Sex and HN Genotype', y = 'Percent Freezing Time', x='Genotype')
 
-ggplot(data = day1_relevant_data, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+ggplot(data = day1_nonHN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(.~Sex) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 1 Contextual Test All Ages by Sex and nonHN Genotype', y = 'Percent Freezing Time', x='Genotype')
+
+# day 1 comparing HN and nonHNs by treatment and sex
+
+ggplot(data = day1_HN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
   geom_violin() +
   geom_boxplot(width = 0.1) +
   theme_bw() +
   facet_grid(Treatment~Sex) + 
   geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
-  labs(title='Day 1 Contextual Test by Sex and Treatment', y = 'Percent Freezing Time', x='Genotype') + 
-  theme(axis.text.x = element_text(angle = 90))
+  labs(title='Day 1 Contextual Test All Ages by Treatment, Sex and HN Genotype', y = 'Percent Freezing Time', x='Genotype')
+
+ggplot(data = day1_nonHN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(Treatment~Sex) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 1 Contextual Test All Ages by Treatment, Sex and nonHN Genotype', y = 'Percent Freezing Time', x='Genotype')
+
+# day 1 comparing HN and nonHNs by treatment and age
+
+ggplot(data = day1_HN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(Treatment~Age) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 1 Contextual Test Treatment, Age and HN Genotype', y = 'Percent Freezing Time', x='Genotype')
+
+ggplot(data = day1_nonHN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(Treatment~Age) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 1 Contextual Test Treatment, Age and nonHN Genotype', y = 'Percent Freezing Time', x='Genotype')
+
 ```
 
 ```{r day-2-analysis}
@@ -490,98 +760,304 @@ day2_relevant_data <- all_day2 %>%
   )) %>%
   select(Animal_ID, Component, Age, Sex, Genotype, Treatment, Pct.Total.Time.Freezing)
 
-day2_all_ages_treatment_genotype <- day2_relevant_data %>%
-  select(Component, Genotype, Pct.Total.Time.Freezing) %>%
-  group_by(Component, Genotype) %>%
-  summarise(n=n(),
-            se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
-            len = mean(Pct.Total.Time.Freezing)) 
+# day 2 comparing HNs and nonHNs by component 
 
-ggplot(data = day2_all_ages_treatment_genotype, aes(x = Component, y = len, fill = Genotype)) +
-  geom_bar(stat = 'identity') +
-  facet_grid(.~Genotype) + 
-  geom_errorbar(aes(ymin=len-se, ymax=len+se), width = 0.2, size = 0.5) +
-  theme_bw() +
-  labs(title = 'Day 2 All Ages Percent Freezing by Component and Genotype', y = 'Mean Percent Time Freezing', x = 'Component') + 
-  theme(axis.text.x = element_text(angle = 90))
+day2_HN_genotype <- day2_relevant_data %>%
+  filter(Genotype == "APOE22HN" |
+         Genotype == "APOE33HN" |
+         Genotype == "APOE44HN")
 
-ggplot(data = day2_all_ages_treatment_genotype, aes(x = Genotype, y = len, fill = Genotype)) +
-  geom_bar(stat = 'identity') +
-  facet_grid(.~Component) + 
-  geom_errorbar(aes(ymin=len-se, ymax=len+se), width = 0.2, size = 0.5) +
-  theme_bw() +
-  labs(title = 'Day 2 All Ages Percent Freezing by Component and Genotype', y = 'Mean Percent Time Freezing', x = 'Genotype') + 
-  theme(axis.text.x = element_text(angle = 90))
-
-day2_all_ages_comp_treatment_genotype <- day2_relevant_data %>%
-  select(Component, Treatment, Genotype, Pct.Total.Time.Freezing) %>%
-  group_by(Component, Treatment, Genotype) %>%
-  summarise(n=n(),
-            se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
-            len = mean(Pct.Total.Time.Freezing)) 
-
-ggplot(data = day2_all_ages_comp_treatment_genotype, aes(x = Component, y = len, fill = Genotype)) +
-  geom_bar(stat = 'identity') +
-  facet_grid(Treatment~Genotype) + 
-  geom_errorbar(aes(ymin=len-se, ymax=len+se), width = 0.2, size = 0.5) +
-  theme_bw() +
-  labs(title = 'Day 2 All Ages Percent Freezing by Treatment, Component, and Genotype', y = 'Mean Percent Time Freezing', x = 'Component') + 
-  theme(axis.text.x = element_text(angle = 90))
-
-ggplot(data = day2_relevant_data, aes(factor(Component), Pct.Total.Time.Freezing)) +
+ggplot(data = day2_HN_genotype, aes(factor(Component), Pct.Total.Time.Freezing)) +
   geom_violin() +
   geom_boxplot(width = 0.1) +
   theme_bw() +
-  facet_grid(Treatment~Genotype) + 
+  facet_grid(.~Genotype) + 
   geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
-  labs(title='Day 2 All Ages Percent Freezing by Treatment, Component, and Genotype', y = 'Percent Freezing Time', x='Component') + 
+  labs(title='Day 2 All Ages Percent Freezing by Component and HN Genotype', y = 'Percent Freezing Time', x='Component') + 
   theme(axis.text.x = element_text(angle = 90))
 
-day2_comp_age_genotype <- day2_relevant_data %>%
-  select(Component, Age, Genotype, Pct.Total.Time.Freezing) %>%
-  group_by(Component, Age, Genotype) %>%
-  summarise(n=n(),
-            se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
-            len = mean(Pct.Total.Time.Freezing)) 
+day2_nonHN_genotype <- day2_relevant_data %>%
+  filter(Genotype == "APOE22" |
+         Genotype == "APOE33" |
+         Genotype == "APOE44")
 
-ggplot(data = day2_comp_age_genotype, aes(x = Component, y = len, fill = Genotype)) +
-  geom_bar(stat = 'identity') +
-  facet_grid(Age~Genotype) + 
-  geom_errorbar(aes(ymin=len-se, ymax=len+se), width = 0.2, size = 0.5) +
+ggplot(data = day2_nonHN_genotype, aes(factor(Component), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
   theme_bw() +
-  labs(title = 'Day 2 Percent Freezing by Age, Component, and Genotype', y = 'Mean Percent Time Freezing', x = 'Component') + 
+  facet_grid(.~Genotype) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 2 All Ages Percent Freezing by Component and nonHN Genotype', y = 'Percent Freezing Time', x='Component') + 
   theme(axis.text.x = element_text(angle = 90))
 
-day2_12_months_comp_treatment_genotype <- day2_relevant_data %>%
-  filter(Age == '12 months') %>%
-  select(Component, Treatment, Genotype, Pct.Total.Time.Freezing) %>%
-  group_by(Component, Treatment, Genotype) %>%
-  summarise(n=n(),
-            se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
-            len = mean(Pct.Total.Time.Freezing)) 
-
-ggplot(data = day2_12_months_comp_treatment_genotype, aes(x = Component, y = len, fill = Genotype)) +
-  geom_bar(stat = 'identity') +
-  facet_grid(Treatment~Genotype) + 
-  geom_errorbar(aes(ymin=len-se, ymax=len+se), width = 0.2, size = 0.5) +
+ggplot(data = day2_HN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
   theme_bw() +
-  labs(title = 'Day 2 12 Months Percent Freezing by Treatment, Component, and Genotype', y = 'Mean Percent Time Freezing', x = 'Component') + 
+  facet_grid(.~Component) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 2 All Ages Percent Freezing by Component and HN Genotype', y = 'Percent Freezing Time', x='Component') + 
   theme(axis.text.x = element_text(angle = 90))
 
-day2_18_months_comp_treatment_genotype <- day2_relevant_data %>%
-  filter(Age == '18 months') %>%
-  select(Component, Treatment, Genotype, Pct.Total.Time.Freezing) %>%
-  group_by(Component, Treatment, Genotype) %>%
-  summarise(n=n(),
-            se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
-            len = mean(Pct.Total.Time.Freezing)) 
-
-ggplot(data = day2_18_months_comp_treatment_genotype, aes(x = Component, y = len, fill = Genotype)) +
-  geom_bar(stat = 'identity') +
-  facet_grid(Treatment~Genotype) + 
-  geom_errorbar(aes(ymin=len-se, ymax=len+se), width = 0.2, size = 0.5) +
+ggplot(data = day2_nonHN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
   theme_bw() +
-  labs(title = 'Day 2 18 Months Percent Freezing by Treatment, Component, and Genotype', y = 'Mean Percent Time Freezing', x = 'Component') + 
+  facet_grid(.~Component) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 2 All Ages Percent Freezing by Component and nonHN Genotype', y = 'Percent Freezing Time', x='Component') + 
+  theme(axis.text.x = element_text(angle = 90))
+
+# day2_all_ages_treatment_genotype <- day2_relevant_data %>%
+#   select(Component, Genotype, Pct.Total.Time.Freezing) %>%
+#   group_by(Component, Genotype) %>%
+#   summarise(n=n(),
+#             se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
+#             len = mean(Pct.Total.Time.Freezing)) 
+# 
+# ggplot(data = day2_all_ages_treatment_genotype, aes(x = Component, y = len, fill = Genotype)) +
+#   geom_bar(stat = 'identity') +
+#   facet_grid(.~Genotype) + 
+#   geom_errorbar(aes(ymin=len-se, ymax=len+se), width = 0.2, size = 0.5) +
+#   theme_bw() +
+#   labs(title = 'Day 2 All Ages Percent Freezing by Component and Genotype', y = 'Mean Percent Time Freezing', x = 'Component') + 
+#   theme(axis.text.x = element_text(angle = 90))
+# 
+# ggplot(data = day2_all_ages_treatment_genotype, aes(x = Genotype, y = len, fill = Genotype)) +
+#   geom_bar(stat = 'identity') +
+#   facet_grid(.~Component) + 
+#   geom_errorbar(aes(ymin=len-se, ymax=len+se), width = 0.2, size = 0.5) +
+#   theme_bw() +
+#   labs(title = 'Day 2 All Ages Percent Freezing by Component and Genotype', y = 'Mean Percent Time Freezing', x = 'Genotype') + 
+#   theme(axis.text.x = element_text(angle = 90))
+
+# day 2 comparing HNs and nonHNs by treatment
+
+ggplot(data = day2_HN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(Treatment~Component) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 2 All Ages Percent Freezing by Treatment, Component and HN Genotype', y = 'Percent Freezing Time', x='Component') + 
+  theme(axis.text.x = element_text(angle = 90))
+
+ggplot(data = day2_nonHN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(Treatment~Component) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 2 All Ages Percent Freezing by Treatment, Component and nonHN Genotype', y = 'Percent Freezing Time', x='Component') + 
+  theme(axis.text.x = element_text(angle = 90))
+
+# day2_all_ages_comp_treatment_genotype <- day2_relevant_data %>%
+#   select(Component, Treatment, Genotype, Pct.Total.Time.Freezing) %>%
+#   group_by(Component, Treatment, Genotype) %>%
+#   summarise(n=n(),
+#             se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
+#             len = mean(Pct.Total.Time.Freezing)) 
+# 
+# ggplot(data = day2_all_ages_comp_treatment_genotype, aes(x = Component, y = len, fill = Genotype)) +
+#   geom_bar(stat = 'identity') +
+#   facet_grid(Treatment~Genotype) + 
+#   geom_errorbar(aes(ymin=len-se, ymax=len+se), width = 0.2, size = 0.5) +
+#   theme_bw() +
+#   labs(title = 'Day 2 All Ages Percent Freezing by Treatment, Component, and Genotype', y = 'Mean Percent Time Freezing', x = 'Component') + 
+#   theme(axis.text.x = element_text(angle = 90))
+# 
+# ggplot(data = day2_relevant_data, aes(factor(Component), Pct.Total.Time.Freezing)) +
+#   geom_violin() +
+#   geom_boxplot(width = 0.1) +
+#   theme_bw() +
+#   facet_grid(Treatment~Genotype) + 
+#   geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+#   labs(title='Day 2 All Ages Percent Freezing by Treatment, Component, and Genotype', y = 'Percent Freezing Time', x='Component') + 
+#   theme(axis.text.x = element_text(angle = 90))
+
+# day 2 comparing 12 month HN and nonHNs by treatment
+
+day2_12_months_HN_genotype <- day2_HN_genotype %>%
+  filter(Age == '12 months')
+
+ggplot(data = day2_12_months_HN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(Treatment~Component) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 2 12 Months Percent Freezing by Treatment, Component and HN Genotype', y = 'Percent Freezing Time', x='Component') + 
+  theme(axis.text.x = element_text(angle = 90))
+
+day2_12_months_nonHN_genotype <- day2_nonHN_genotype %>%
+  filter(Age == '12 months')
+
+ggplot(data = day2_12_months_nonHN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(Treatment~Component) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 2 12 Months Percent Freezing by Treatment, Component and nonHN Genotype', y = 'Percent Freezing Time', x='Component') + 
+  theme(axis.text.x = element_text(angle = 90))
+
+# day2_12_months_comp_treatment_genotype <- day2_relevant_data %>%
+#   filter(Age == '12 months') %>%
+#   select(Component, Treatment, Genotype, Pct.Total.Time.Freezing) %>%
+#   group_by(Component, Treatment, Genotype) %>%
+#   summarise(n=n(),
+#             se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
+#             len = mean(Pct.Total.Time.Freezing)) 
+# 
+# ggplot(data = day2_12_months_comp_treatment_genotype, aes(x = Component, y = len, fill = Genotype)) +
+#   geom_bar(stat = 'identity') +
+#   facet_grid(Treatment~Genotype) + 
+#   geom_errorbar(aes(ymin=len-se, ymax=len+se), width = 0.2, size = 0.5) +
+#   theme_bw() +
+#   labs(title = 'Day 2 12 Months Percent Freezing by Treatment, Component, and Genotype', y = 'Mean Percent Time Freezing', x = 'Component') + 
+#   theme(axis.text.x = element_text(angle = 90))
+
+# day 2 comparing 18 month HN and nonHNs by treatment
+
+day2_18_months_HN_genotype <- day2_HN_genotype %>%
+  filter(Age == '18 months')
+
+ggplot(data = day2_18_months_HN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(Treatment~Component) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 2 18 Months Percent Freezing by Treatment, Component and HN Genotype', y = 'Percent Freezing Time', x='Component') + 
+  theme(axis.text.x = element_text(angle = 90))
+
+day2_18_months_nonHN_genotype <- day2_nonHN_genotype %>%
+  filter(Age == '18 months')
+
+ggplot(data = day2_18_months_nonHN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(Treatment~Component) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 2 18 Months Percent Freezing by Treatment, Component and nonHN Genotype', y = 'Percent Freezing Time', x='Component') + 
+  theme(axis.text.x = element_text(angle = 90))
+
+# day2_18_months_comp_treatment_genotype <- day2_relevant_data %>%
+#   filter(Age == '18 months') %>%
+#   select(Component, Treatment, Genotype, Pct.Total.Time.Freezing) %>%
+#   group_by(Component, Treatment, Genotype) %>%
+#   summarise(n=n(),
+#             se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
+#             len = mean(Pct.Total.Time.Freezing)) 
+# 
+# ggplot(data = day2_18_months_comp_treatment_genotype, aes(x = Component, y = len, fill = Genotype)) +
+#   geom_bar(stat = 'identity') +
+#   facet_grid(Treatment~Genotype) + 
+#   geom_errorbar(aes(ymin=len-se, ymax=len+se), width = 0.2, size = 0.5) +
+#   theme_bw() +
+#   labs(title = 'Day 2 18 Months Percent Freezing by Treatment, Component, and Genotype', y = 'Mean Percent Time Freezing', x = 'Component') + 
+#   theme(axis.text.x = element_text(angle = 90))
+
+# comparing HNs and nonHNs by age
+
+ggplot(data = day2_HN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(Age~Component) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 2 Percent Freezing by Age, Component and HN Genotype', y = 'Percent Freezing Time', x='Component') + 
+  theme(axis.text.x = element_text(angle = 90))
+
+ggplot(data = day2_nonHN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(Age~Component) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 2 Percent Freezing by Age, Component and nonHN Genotype', y = 'Percent Freezing Time', x='Component') + 
+  theme(axis.text.x = element_text(angle = 90))
+
+# day2_comp_age_genotype <- day2_relevant_data %>%
+#   select(Component, Age, Genotype, Pct.Total.Time.Freezing) %>%
+#   group_by(Component, Age, Genotype) %>%
+#   summarise(n=n(),
+#             se = sd(Pct.Total.Time.Freezing, na.rm=TRUE)/sqrt(n),
+#             len = mean(Pct.Total.Time.Freezing)) 
+# 
+# ggplot(data = day2_comp_age_genotype, aes(x = Component, y = len, fill = Genotype)) +
+#   geom_bar(stat = 'identity') +
+#   facet_grid(Age~Genotype) + 
+#   geom_errorbar(aes(ymin=len-se, ymax=len+se), width = 0.2, size = 0.5) +
+#   theme_bw() +
+#   labs(title = 'Day 2 Percent Freezing by Age, Component, and Genotype', y = 'Mean Percent Time Freezing', x = 'Component') + 
+#   theme(axis.text.x = element_text(angle = 90))
+
+# comparing HNs and nonHNs by sex
+
+ggplot(data = day2_HN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(Sex~Component) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 2 All Ages Percent Freezing by Sex, Component and HN Genotype', y = 'Percent Freezing Time', x='Component') + 
+  theme(axis.text.x = element_text(angle = 90))
+
+ggplot(data = day2_nonHN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(Sex~Component) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 2 All Ages Percent Freezing by Sex, Component and nonHN Genotype', y = 'Percent Freezing Time', x='Component') + 
+  theme(axis.text.x = element_text(angle = 90))
+
+# comparing HNs and nonHNs within tone by treatment and age
+
+day2_within_tone_HN_genotype <- day2_HN_genotype %>%
+  filter(Component == '2: Tone')
+
+ggplot(data = day2_within_tone_HN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(Age~Treatment) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 2 Percent Freezing Within Tone by Age and HN Genotype', y = 'Percent Freezing Time', x='Component') + 
+  theme(axis.text.x = element_text(angle = 90))
+
+day2_within_tone_nonHN_genotype <- day2_nonHN_genotype %>%
+  filter(Component == '2: Tone')
+
+ggplot(data = day2_within_tone_nonHN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(Age~Treatment) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 2 Percent Freezing Within Tone by Age and nonHN Genotype', y = 'Percent Freezing Time', x='Component') + 
+  theme(axis.text.x = element_text(angle = 90))
+
+# comparing HNs and nonHNs within tone by treatment and sex
+
+ggplot(data = day2_within_tone_HN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(Sex~Treatment) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 2 Percent Freezing Within Tone by Sex and HN Genotype', y = 'Percent Freezing Time', x='Component') + 
+  theme(axis.text.x = element_text(angle = 90))
+
+ggplot(data = day2_within_tone_nonHN_genotype, aes(factor(Genotype), Pct.Total.Time.Freezing)) +
+  geom_violin() +
+  geom_boxplot(width = 0.1) +
+  theme_bw() +
+  facet_grid(Sex~Treatment) + 
+  geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
+  labs(title='Day 2 Percent Freezing Within Tone by Sex and nonHN Genotype', y = 'Percent Freezing Time', x='Component') + 
   theme(axis.text.x = element_text(angle = 90))
 
 ```
