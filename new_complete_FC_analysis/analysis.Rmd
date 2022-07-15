@@ -23,8 +23,8 @@ library(lme4)
 library(lsmeans)
 library(emmeans)
 library(zoo)
-library(lmerTest)
 library(stringr)
+library(lmerTest)
 
 batch1_0 <- read.csv('~/Documents/new_complete_FC_analysis/FC_Data_7-7-22_Complete/1. FC Batch Report 201026 (CTRL_18_201026)/Batch_day0_201026_15Motionthreshold_10_minfreezeduration.csv', skip=16)
 batch1_1 <- read.csv('~/Documents/new_complete_FC_analysis/FC_Data_7-7-22_Complete/1. FC Batch Report 201026 (CTRL_18_201026)/Batch_day1_211026_15Motionthreshold_10_minfreezeduration.csv', skip=11)
@@ -1059,5 +1059,368 @@ ggplot(data = day2_within_tone_nonHN_genotype, aes(factor(Genotype), Pct.Total.T
   geom_jitter(height = 0, width = 0.3, aes(color = Genotype), alpha = 0.25) +
   labs(title='Day 2 Percent Freezing Within Tone by Sex and nonHN Genotype', y = 'Percent Freezing Time', x='Component') + 
   theme(axis.text.x = element_text(angle = 90))
+
+```
+
+```{r day-0-statistics}
+
+day0_anova_data <- all_day0 %>% 
+  mutate(Time = case_when(
+    Component.Name == 'Sound 1' ~ 1,
+    Component.Name == 'Shock 1' ~ 0,
+    Component.Name == 'Sound 2' ~ 2,
+    Component.Name == 'Shock 2' ~ 0,
+    Component.Name == 'Sound 3' ~ 3,
+    Component.Name == 'Shock 3' ~ 0
+  )) %>% 
+  filter(Time != 0 ) %>% 
+  mutate(Age = case_when(
+    Age_Handling < 16 ~ "12 months",
+    Age_Handling >= 16 ~ "18 months"
+  )) %>%
+  mutate(Sex = case_when(
+    Sex == 'female' ~ 'Female',
+    Sex == 'male' ~ 'Male',
+    Sex == 'female ' ~ 'Female',
+    Sex == 'male ' ~ 'Male'
+  )) %>%
+  filter(Genotype == 'APOE22') %>%
+  select(Animal_ID, Time, Age, Age_Handling, Sex,Treatment, Pct.Total.Time.Freezing, Freeze.Cnt)
+
+day0_anova_data$Treatment = as.factor(day0_anova_data$Treatment)
+day0_anova_data$Age = as.factor(day0_anova_data$Age)
+day0_anova_data$Sex = as.factor(day0_anova_data$Sex)
+
+day0_lmer <- lmer(Pct.Total.Time.Freezing ~ Age*Sex*Treatment*Time+(1|Animal_ID), day0_anova_data)
+anova(day0_lmer)
+day0_em <- na.omit(as.data.frame(emmeans(day0_lmer, list(pairwise ~ Age*Sex*Treatment), adjust="tukey")$`pairwise differences of Age, Sex, Treatment`)) %>% arrange(p.value)
+
+```
+
+```{r day-0-statistics}
+
+day0_anova_data <- all_day0 %>% 
+  mutate(Time = case_when(
+    Component.Name == 'Sound 1' ~ 1,
+    Component.Name == 'Shock 1' ~ 0,
+    Component.Name == 'Sound 2' ~ 2,
+    Component.Name == 'Shock 2' ~ 0,
+    Component.Name == 'Sound 3' ~ 3,
+    Component.Name == 'Shock 3' ~ 0
+  )) %>% 
+  filter(Time != 0 ) %>% 
+  mutate(Age = case_when(
+    Age_Handling < 16 ~ "12 months",
+    Age_Handling >= 16 ~ "18 months"
+  )) %>%
+  mutate(Sex = case_when(
+    Sex == 'female' ~ 'Female',
+    Sex == 'male' ~ 'Male',
+    Sex == 'female ' ~ 'Female',
+    Sex == 'male ' ~ 'Male'
+  )) %>%
+  select(Animal_ID, Time, Age, Age_Handling, Sex, Genotype, Treatment, Pct.Total.Time.Freezing, Freeze.Cnt) %>%
+  mutate(HN = case_when(
+    Genotype == 'APOE22HN' ~ 1,
+    Genotype =='APOE33HN' ~ 1,
+    Genotype == 'APOE44HN' ~ 1,
+    Genotype == 'APOE22' ~ -1,
+    Genotype =='APOE33' ~ -1,
+    Genotype == 'APOE44' ~ -1
+  )) %>%
+  mutate(APOE = case_when(
+    Genotype == 'APOE22HN' ~ 2,
+    Genotype =='APOE33HN' ~ 3,
+    Genotype == 'APOE44HN' ~ 4,
+    Genotype == 'APOE22' ~ 2,
+    Genotype =='APOE33' ~ 3,
+    Genotype == 'APOE44' ~ 4
+  ))
+
+day0_anova_data$Treatment = as.factor(day0_anova_data$Treatment)
+day0_anova_data$Age = as.factor(day0_anova_data$Age)
+day0_anova_data$Sex = as.factor(day0_anova_data$Sex)
+day0_anova_data$Genotype = as.factor(day0_anova_data$Genotype)
+day0_anova_data$HN = as.factor(day0_anova_data$HN)
+day0_anova_data$APOE = as.factor(day0_anova_data$APOE)
+
+day0_lmer1 <- lmer(Pct.Total.Time.Freezing ~ Age*Genotype*Sex*Treatment*Time+(1|Animal_ID), day0_anova_data)
+anova(day0_lmer1)
+day0_em1 <- na.omit(as.data.frame(emmeans(day0_lmer1, list(pairwise ~ Age*Genotype*Sex*Treatment), adjust="tukey")$`pairwise differences of Age, Genotype, Sex, Treatment`)) %>%
+  filter(p.value < 0.05) %>% arrange(p.value)
+
+day0_lmer2 <- lmer(Pct.Total.Time.Freezing ~ HN*APOE*Time+(1|Animal_ID), day0_anova_data)
+anova(day0_lmer2)
+day0_em2 <- na.omit(as.data.frame(emmeans(day0_lmer2, list(pairwise ~ HN*APOE), adjust="tukey")$`pairwise differences of HN, APOE`))  %>%
+  filter(p.value < 0.05) %>% arrange(p.value)
+
+day0_lmer3 <- lmer(Freeze.Cnt ~ Age*Genotype*Sex*Treatment*Time+(1|Animal_ID), day0_anova_data)
+anova(day0_lmer3)
+day0_em3 <- na.omit(as.data.frame(emmeans(day0_lmer3, list(pairwise ~ Age*Genotype*Sex*Treatment), adjust="tukey")$`pairwise differences of Age, Genotype, Sex, Treatment`)) %>%
+  filter(p.value < 0.05) %>% arrange(p.value)
+
+day0_lmer4 <- lmer(Freeze.Cnt ~ HN*APOE*Time+(1|Animal_ID), day0_anova_data)
+anova(day0_lmer4)
+day0_em4 <- na.omit(as.data.frame(emmeans(day0_lmer4, list(pairwise ~ HN*APOE), adjust="tukey")$`pairwise differences of HN, APOE`)) %>%
+  filter(p.value < 0.05) %>% arrange(p.value)
+
+# day0_lmer <- lmer(Pct.Total.Time.Freezing ~ Age*Genotype*Sex*Treatment*Time+(1|Animal_ID), day0_anova_data)
+# anova(day0_lmer)
+# 
+# day0_em <- na.omit(as.data.frame(emmeans(day0_lmer, list(pairwise ~ Age*Genotype*Sex*Treatment), adjust="tukey")$`pairwise differences of Age, Genotype, Sex, Treatment`))
+# day0_em <- day0_em[order(day0_em$p.value),]
+# rownames(day0_em) <- NULL
+# day0_em_sig <- day0_em[day0_em$p.value <= 0.05,]
+# rownames(day0_em_sig) <- NULL
+# 
+# day0_lmer_2 <- lmer(Pct.Total.Time.Freezing ~ HN*APOE*Time+(1|Animal_ID), day0_anova_data)
+# anova(day0_lmer_2)
+# 
+# day0_em2 <- na.omit(as.data.frame(emmeans(day0_lmer_2, list(pairwise ~ HN*APOE), adjust="tukey")$`pairwise differences of HN, APOE`))
+# day0_em2 <- day0_em2[order(day0_em2$p.value),]
+# rownames(day0_em2) <- NULL
+# day0_em_sig2 <- day0_em2[day0_em2$p.value <= 0.05,]
+# rownames(day0_em_sig2) <- NULL
+
+```
+
+```{r day-1-statistics}
+
+day1_anova_data <- all_day1 %>% 
+  mutate(Age = case_when(
+    Age_Handling < 16 ~ "12 months",
+    Age_Handling >= 16 ~ "18 months"
+  )) %>%
+  mutate(Sex = case_when(
+    Sex == 'female' ~ 'Female',
+    Sex == 'male' ~ 'Male',
+    Sex == 'female ' ~ 'Female',
+    Sex == 'male ' ~ 'Male'
+  )) %>%
+  select(Animal_ID, Age, Age_Handling, Sex, Genotype, Treatment, Pct.Total.Time.Freezing, Freeze.Cnt) %>%
+  mutate(HN = case_when(
+    Genotype == 'APOE22HN' ~ 1,
+    Genotype =='APOE33HN' ~ 1,
+    Genotype == 'APOE44HN' ~ 1,
+    Genotype == 'APOE22' ~ -1,
+    Genotype =='APOE33' ~ -1,
+    Genotype == 'APOE44' ~ -1
+  )) %>%
+  mutate(APOE = case_when(
+    Genotype == 'APOE22HN' ~ 2,
+    Genotype =='APOE33HN' ~ 3,
+    Genotype == 'APOE44HN' ~ 4,
+    Genotype == 'APOE22' ~ 2,
+    Genotype =='APOE33' ~ 3,
+    Genotype == 'APOE44' ~ 4
+  ))
+
+day1_anova_data$Treatment = as.factor(day1_anova_data$Treatment)
+day1_anova_data$Age = as.factor(day1_anova_data$Age)
+day1_anova_data$Sex = as.factor(day1_anova_data$Sex)
+day1_anova_data$Genotype = as.factor(day1_anova_data$Genotype)
+day1_anova_data$HN = as.factor(day1_anova_data$HN)
+day1_anova_data$APOE = as.factor(day1_anova_data$APOE)
+
+day1_lm1 <- lm(Pct.Total.Time.Freezing ~ Age*Genotype*Sex*Treatment, day1_anova_data)
+anova(day1_lm1)
+day1_em1 <- na.omit(as.data.frame(emmeans(day1_lm1, list(pairwise ~ Age*Genotype*Sex*Treatment), adjust="tukey")$`pairwise differences of Age, Genotype, Sex, Treatment`)) %>%
+  filter(p.value < 0.05) %>% arrange(p.value)
+
+day1_lm1_2 <- lm(Pct.Total.Time.Freezing ~ Genotype, day1_anova_data)
+anova(day1_lm1_2)
+day1_em1_2 <- na.omit(as.data.frame(emmeans(day1_lm1_2, list(pairwise ~ Genotype), adjust="tukey")$`pairwise differences of Genotype`)) %>%
+  filter(p.value < 0.05) %>% arrange(p.value)
+
+day1_lm2 <- lm(Pct.Total.Time.Freezing ~ HN*APOE, day1_anova_data)
+anova(day1_lm2)
+day1_em2 <- na.omit(as.data.frame(emmeans(day1_lm2, list(pairwise ~ HN*APOE), adjust="tukey")$`pairwise differences of HN, APOE`)) %>%
+  filter(p.value < 0.05) %>% arrange(p.value)
+
+day1_lm3 <- lm(Freeze.Cnt ~ Age*Genotype*Sex*Treatment, day1_anova_data)
+anova(day1_lm3)
+day1_em3 <- na.omit(as.data.frame(emmeans(day1_lm3, list(pairwise ~ Age*Genotype*Sex*Treatment), adjust="tukey")$`pairwise differences of Age, Genotype, Sex, Treatment`)) %>%
+  filter(p.value < 0.05) %>% arrange(p.value)
+
+day1_lm4 <- lm(Freeze.Cnt ~ HN*APOE, day1_anova_data)
+anova(day1_lm4)
+day1_em4 <- na.omit(as.data.frame(emmeans(day1_lm4, list(pairwise ~ HN*APOE), adjust="tukey")$`pairwise differences of HN, APOE`)) %>%
+  filter(p.value < 0.05) %>% arrange(p.value)
+
+# day1_lm <- lm(Pct.Total.Time.Freezing ~ Age*Genotype*Sex*Treatment, day1_anova_data)
+# anova(day1_lm)
+# 
+# day1_em <- na.omit(as.data.frame(emmeans(day1_lm, list(pairwise ~ Age*Genotype*Sex*Treatment), adjust="tukey")$`pairwise differences of Age, Genotype, Sex, Treatment`))
+# day1_em <- day1_em[order(day1_em$p.value),]
+# rownames(day1_em) <- NULL
+# day1_em_sig <- day1_em[day1_em$p.value <= 0.05,]
+# rownames(day1_em_sig) <- NULL
+# 
+# day1_lm_2 <- lm(Pct.Total.Time.Freezing ~ HN*APOE, day1_anova_data)
+# anova(day1_lm_2)
+# 
+# day1_em2 <- na.omit(as.data.frame(emmeans(day1_lm_2, list(pairwise ~ HN*APOE), adjust="tukey")$`pairwise differences of HN, APOE`))
+# day1_em2 <- day1_em2[order(day1_em2$p.value),]
+# rownames(day1_em2) <- NULL
+# day1_em_sig2 <- day1_em2[day1_em2$p.value <= 0.05,]
+# rownames(day1_em_sig2) <- NULL
+
+```
+
+```{r day-2-statistics}
+
+day2_anova_data <- all_day2 %>% 
+  mutate(Component = case_when(
+    Component.Name == 'Day2_Acclimation' ~ 1,
+    Component.Name == 'Day2_CSTone' ~ 2,
+    Component.Name == 'Day2_Exploration' ~ 3
+  )) %>%
+  mutate(Age = case_when(
+    Age_Handling < 16 ~ "12 months",
+    Age_Handling >= 16 ~ "18 months"
+  )) %>%
+  mutate(Sex = case_when(
+    Sex == 'female' ~ 'Female',
+    Sex == 'male' ~ 'Male',
+    Sex == 'female ' ~ 'Female',
+    Sex == 'male ' ~ 'Male'
+  )) %>%
+  select(Animal_ID, Component, Age, Age_Handling, Sex, Genotype, Treatment, Pct.Total.Time.Freezing, Freeze.Cnt) %>%
+  mutate(HN = case_when(
+    Genotype == 'APOE22HN' ~ 1,
+    Genotype =='APOE33HN' ~ 1,
+    Genotype == 'APOE44HN' ~ 1,
+    Genotype == 'APOE22' ~ -1,
+    Genotype =='APOE33' ~ -1,
+    Genotype == 'APOE44' ~ -1
+  )) %>%
+  mutate(APOE = case_when(
+    Genotype == 'APOE22HN' ~ 2,
+    Genotype =='APOE33HN' ~ 3,
+    Genotype == 'APOE44HN' ~ 4,
+    Genotype == 'APOE22' ~ 2,
+    Genotype =='APOE33' ~ 3,
+    Genotype == 'APOE44' ~ 4
+  ))
+
+day2_anova_data$Treatment = as.factor(day2_anova_data$Treatment)
+day2_anova_data$Age = as.factor(day2_anova_data$Age)
+day2_anova_data$Sex = as.factor(day2_anova_data$Sex)
+day2_anova_data$Genotype = as.factor(day2_anova_data$Genotype)
+day2_anova_data$HN = as.factor(day2_anova_data$HN)
+day2_anova_data$APOE = as.factor(day2_anova_data$APOE)
+
+day2_lmer1 <- lmer(Pct.Total.Time.Freezing ~ Age*Genotype*Sex*Treatment*Component+(1|Animal_ID), day2_anova_data)
+anova(day2_lmer1)
+day2_em1 <- na.omit(as.data.frame(emmeans(day2_lmer1, list(pairwise ~ Age*Genotype*Sex*Treatment), adjust="tukey")$`pairwise differences of Age, Genotype, Sex, Treatment`)) %>%
+  filter(p.value < 0.05) %>% arrange(p.value)
+
+day2_lmer2 <- lmer(Pct.Total.Time.Freezing ~ HN*APOE*Component+(1|Animal_ID), day2_anova_data)
+anova(day2_lmer2)
+day2_em2 <- na.omit(as.data.frame(emmeans(day2_lmer2, list(pairwise ~ HN*APOE), adjust="tukey")$`pairwise differences of HN, APOE`)) %>%
+  filter(p.value < 0.05) %>% arrange(p.value)
+
+day2_lmer3 <- lmer(Freeze.Cnt ~ Age*Genotype*Sex*Treatment*Component+(1|Animal_ID), day2_anova_data)
+anova(day2_lmer3)
+day2_em3 <- na.omit(as.data.frame(emmeans(day2_lmer3, list(pairwise ~ Age*Genotype*Sex*Treatment), adjust="tukey")$`pairwise differences of Age, Genotype, Sex, Treatment`)) %>%
+  filter(p.value < 0.05) %>% arrange(p.value)
+
+day2_lmer4 <- lmer(Freeze.Cnt ~ HN*APOE*Component+(1|Animal_ID), day2_anova_data)
+anova(day2_lmer4)
+day2_em4 <- na.omit(as.data.frame(emmeans(day2_lmer4, list(pairwise ~ HN*APOE), adjust="tukey")$`pairwise differences of HN, APOE`)) %>%
+  filter(p.value < 0.05) %>% arrange(p.value)
+
+# day2_lmer <- lmer(Pct.Total.Time.Freezing ~ Age*Genotype*Sex*Treatment*Component+(1|Animal_ID), day2_anova_data)
+# anova(day2_lmer)
+# 
+# day2_em <- na.omit(as.data.frame(emmeans(day2_lmer, list(pairwise ~ Age*Genotype*Sex*Treatment), adjust="tukey")$`pairwise differences of Age, Genotype, Sex, Treatment`))
+# day2_em <- day2_em[order(day2_em$p.value),]
+# rownames(day2_em) <- NULL
+# day2_em_sig <- day2_em[day2_em$p.value <= 0.05,]
+# rownames(day2_em_sig) <- NULL
+# 
+# day2_lmer_2 <- lmer(Pct.Total.Time.Freezing ~ HN*APOE*Component+(1|Animal_ID), day2_anova_data)
+# anova(day2_lmer_2)
+# 
+# day2_em2 <- na.omit(as.data.frame(emmeans(day2_lmer_2, list(pairwise ~ HN*APOE), adjust="tukey")$`pairwise differences of HN, APOE`))
+# day2_em2 <- day2_em2[order(day2_em2$p.value),]
+# rownames(day2_em2) <- NULL
+# day2_em_sig2 <- day2_em2[day2_em2$p.value <= 0.05,]
+# rownames(day2_em_sig2) <- NULL
+
+day2_anova_data_within_tone <- all_day2 %>% 
+  filter(Component.Name == 'Day2_CSTone') %>%
+  mutate(Age = case_when(
+    Age_Handling < 16 ~ "12 months",
+    Age_Handling >= 16 ~ "18 months"
+  )) %>%
+  mutate(Sex = case_when(
+    Sex == 'female' ~ 'Female',
+    Sex == 'male' ~ 'Male',
+    Sex == 'female ' ~ 'Female',
+    Sex == 'male ' ~ 'Male'
+  )) %>%
+  select(Animal_ID, Age, Age_Handling, Sex, Genotype, Treatment, Pct.Total.Time.Freezing, Freeze.Cnt) %>%
+  mutate(HN = case_when(
+    Genotype == 'APOE22HN' ~ 1,
+    Genotype =='APOE33HN' ~ 1,
+    Genotype == 'APOE44HN' ~ 1,
+    Genotype == 'APOE22' ~ -1,
+    Genotype =='APOE33' ~ -1,
+    Genotype == 'APOE44' ~ -1
+  )) %>%
+  mutate(APOE = case_when(
+    Genotype == 'APOE22HN' ~ 2,
+    Genotype =='APOE33HN' ~ 3,
+    Genotype == 'APOE44HN' ~ 4,
+    Genotype == 'APOE22' ~ 2,
+    Genotype =='APOE33' ~ 3,
+    Genotype == 'APOE44' ~ 4
+  ))
+
+day2_anova_data_within_tone$Treatment = as.factor(day2_anova_data_within_tone$Treatment)
+day2_anova_data_within_tone$Age = as.factor(day2_anova_data_within_tone$Age)
+day2_anova_data_within_tone$Sex = as.factor(day2_anova_data_within_tone$Sex)
+day2_anova_data_within_tone$Genotype = as.factor(day2_anova_data_within_tone$Genotype)
+day2_anova_data_within_tone$HN = as.factor(day2_anova_data_within_tone$HN)
+day2_anova_data_within_tone$APOE = as.factor(day2_anova_data_within_tone$APOE)
+
+day2_tone_lm1 <- lm(Pct.Total.Time.Freezing ~ Age*Genotype*Sex*Treatment, day2_anova_data_within_tone)
+anova(day2_tone_lm1)
+day2_tone_em1 <- na.omit(as.data.frame(emmeans(day2_tone_lm1, list(pairwise ~ Age*Genotype*Sex*Treatment), adjust="tukey")$`pairwise differences of Age, Genotype, Sex, Treatment`)) %>%
+  filter(p.value < 0.05) %>% arrange(p.value)
+
+day2_tone_lm2 <- lm(Pct.Total.Time.Freezing ~ HN*APOE, day2_anova_data_within_tone)
+anova(day2_tone_lm2)
+day2_tone_em2 <- na.omit(as.data.frame(emmeans(day2_tone_lm2, list(pairwise ~ HN*APOE), adjust="tukey")$`pairwise differences of HN, APOE`)) %>%
+  filter(p.value < 0.05) %>% arrange(p.value)
+
+day2_tone_lm3 <- lm(Freeze.Cnt ~ Age*Genotype*Sex*Treatment, day2_anova_data_within_tone)
+anova(day2_tone_lm3)
+day2_tone_em3 <- na.omit(as.data.frame(emmeans(day2_tone_lm3, list(pairwise ~ Age*Genotype*Sex*Treatment), adjust="tukey")$`pairwise differences of Age, Genotype, Sex, Treatment`)) %>%
+  filter(p.value < 0.05) %>% arrange(p.value)
+
+day2_tone_lm4 <- lm(Freeze.Cnt ~ HN*APOE, day2_anova_data_within_tone)
+anova(day2_tone_lm4)
+day2_tone_em4 <- na.omit(as.data.frame(emmeans(day2_tone_lm4, list(pairwise ~ HN*APOE), adjust="tukey")$`pairwise differences of HN, APOE`)) %>%
+  filter(p.value < 0.05) %>% arrange(p.value)
+
+# day2_lm <- lm(Pct.Total.Time.Freezing ~ Age*Genotype*Sex*Treatment, day2_anova_data_within_tone)
+# anova(day2_lm)
+# 
+# day2_em_within_tone <- na.omit(as.data.frame(emmeans(day2_lm, list(pairwise ~ Age*Genotype*Sex*Treatment), adjust="tukey")$`pairwise differences of Age, Genotype, Sex, Treatment`))
+# day2_em_within_tone <- day2_em_within_tone[order(day2_em_within_tone$p.value),]
+# rownames(day2_em_within_tone) <- NULL
+# day2_em_within_tone_sig <- day2_em_within_tone[day2_em_within_tone$p.value <= 0.05,]
+# rownames(day2_em_within_tone_sig) <- NULL
+# 
+# day2_lm_2 <- lm(Pct.Total.Time.Freezing ~ HN*APOE, day2_anova_data_within_tone)
+# anova(day2_lm_2)
+# 
+# day2_em_within_tone2 <- na.omit(as.data.frame(emmeans(day2_lm_2, list(pairwise ~ HN*APOE), adjust="tukey")$`pairwise differences of HN, APOE`))
+# day2_em_within_tone2 <- day2_em_within_tone2[order(day2_em_within_tone2$p.value),]
+# rownames(day2_em_within_tone2) <- NULL
+# day2_em_within_tone_sig2 <- day2_em_within_tone2[day2_em_within_tone2$p.value <= 0.05,]
+# rownames(day2_em_within_tone_sig2) <- NULL
 
 ```
